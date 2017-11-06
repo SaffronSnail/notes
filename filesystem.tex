@@ -1,0 +1,183 @@
+\documentclass{article}
+
+\usepackage{color}
+\usepackage{underscore}
+
+\title{Implementing a Filesystem Driver in Linux}
+\date{2017--10--23}
+\author{Bryan Ferris \textless{}saffsnail@gmail.com\textgreater{}}
+
+\newcommand{\sourcecomment}[2][]{Source Comment: #2 \newline #1}
+
+\definecolor{speculative}{RGB}{255,140,0}
+\newcommand{\speculative}[1]{{\color{speculative} #1}}
+
+\newcommand{\separator}[0]{\makebox[\textwidth]{\rule{\paperwidth}{0.4pt}}}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+There are three components to filesystem access in linux: (1) the high-level
+system calls that applications use to access files, (2) the low-level
+filesystem code which performs the operations, and (3) the virtual filesystem,
+or vfs, which facilitates communication between the two. This document focuses
+on the vfs and only discusses the first two points when necesarry (for example,
+to contextualize information about the vfs). Note that \speculative{text like
+this is unverified speculation}.
+
+\subsection{struct super_block}
+This structure contains metainformation about the filesystem. Information about
+its members follows.
+
+\subsubsection{struct list_head s_list}
+\sourcecomment{Keep this first}
+This member is used by the kernel to keep track of all of the superblocks in
+the system. \speculative{The kernel assumes that meta-lists like this one occur
+at the beginning of the structure, justifying the comment.}
+
+\subsubsection{dev_t s_dev}
+\sourcecomment{search index; _not_ kdev_t}
+The device identifier. 
+
+\subsubsection{unsigned char s_blocksize_bits}
+\subsubsection{unsigned long s_blocksize}
+\subsubsection{loff_t s_maxbytes}
+\sourcecomment{Max file size}
+\subsubsection{struct file_system_type *s_type}
+\subsubsection{const struct super_operations *s_op}
+\subsubsection{const struct quotactl_ops *s_qcop}
+\subsubsection{const struct export_operations *s_export_op}
+\subsubsection{unsigned long s_flags}
+\subsubsection{unsigned long s_iflags}
+\sourcecomment{internal SB_I_* flags}
+\subsubsection{unsigned_long s_magic}
+\subsubsection{struct dentry *s_root}
+\subsubsection{struct rw_semaphore s_umount}
+\subsubsection{int s_count}
+\subsubsection{atomic_t s_active}
+\subsubsection{void *s_security}
+\subsubsection{const struct xattr_handler **s_xattr}
+
+\separator{}
+
+\subsubsection{const struct fscrypt_operations *s_cop}
+
+\separator{}
+
+\subsubsection{struct hlist_bl_head s_anon}
+\sourcecomment{anonymous dentries for (nfs) exporting}
+\subsubsection{struct list_head s_mounts}
+\sourcecomment{list of mounts; _not_ for fs use}
+\subsubsection{struct block_device *s_bdev}
+\subsubsection{struct backing_dev_info *s_bdi}
+\subsubsection{struct mtd_info *s_mtd}
+\subsubsection{struct hlist_node s_instances}
+\subsubsection{unsigned int s_quota_types}
+\sourcecomment{Bitmask of supported quota types}
+\subsubsection{struct quota_info s_dquot}
+\sourcecomment{Diskquota specific options}
+
+\separator{}
+
+\subsubsection{struct sb_writers s_writers}
+
+\separator{}
+
+\subsubsection{char s_id[32]}
+\sourcecomment{Informational name}
+\subsubsection{u8 s_uuid[16]}
+\sourcecomment{UUID}
+
+\separator{}
+
+\subsubsection{void *s_fs_info}
+\sourcecomment{Filesystem private info}
+\subsubsection{unsigned int s_max_links}
+\subsubsection{fmode_t s_mode}
+
+\separator{}
+
+\subsubsection{u32 s_time_gran}
+
+\separator{}
+
+\subsubsection{struct mutex s_vfs_rename_mutex}
+\sourcecomment{Kludge}
+
+\separator{}
+
+\subsubsection{char *s_subtype}
+
+\separator{}
+
+\subsubsection{char __rcu *s_options}
+\subsubsection{const struct dentry_operations *s_d_op}
+\sourcecomment{default d_op for dentries}
+
+\separator{}
+
+\subsubsection{int cleancahe_poolid}
+
+\separator{}
+
+\subsubsection{struct shriker s_shrink}
+\sourcecomment{per-sb shrinker handle}
+
+\separator{}
+
+\subsubsection{atomic_long_t s_remove_count}
+\sourcecomment{Number of inodes with nlink == 0 but still referenced}
+
+\separator{}
+
+\subsubsection{int s_readonly_remount}
+\sourcecomment{Being mounted read-only}
+
+\separator{}
+
+\subsubsection{struct workqueue_struct *s_dio_done_wq}
+\sourcecomment{AIO completions deferred from interrupt context}
+\subsubsection{struct hlist_head s_pins}
+
+\separator{}
+
+\subsubsection{struct user_namespace *s_user_ns}
+
+\separator{}
+
+\subsubsection{struct list_lru s_dentry_lru}
+\subsubsection{struct list_lru s_inode_lru}
+\subsubsection{struct rcu_head rcu}
+\subsubsection{struct work_struct destroy_work}
+
+\separator{}
+
+\subsubsection{struct mutex s_sync_lock}
+\sourcecomment{sync serialisation lock}
+
+\separator{}
+
+\subsubsection{int s_stack_depth}
+
+\separator{}
+
+\subsubsection{spinlock_t s_inode_list_lock}
+\sourcecomment{s_inode_list_lock protects s_inodes}
+\subsubsection{struct list_head s_inodes}
+\sourcecomment{all inodes}
+
+\separator{}
+
+\subsubsection{spinlock_t s_inode_wblist_lock}
+\subsubsection{struct list_head s_inodes_wb}
+\sourcecomment{writeback inodes}
+
+\section{References}
+Here are some resources I found useful in the creation of this document:
+https://www.win.tue.nl/~aeb/linux/lk/lk-8.html
+
+\end{document}
+
